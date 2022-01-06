@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/sourcegraph/jsonrpc2"
 	websocketjsonrpc2 "github.com/sourcegraph/jsonrpc2/websocket"
+	"github.com/gorilla/websocket"
 )
 
 func TestRequest_MarshalJSON_jsonrpc(t *testing.T) {

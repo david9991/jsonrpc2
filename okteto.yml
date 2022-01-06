@@ -1,0 +1,17 @@
+name: jsonrpc2
+autocreate: true
+image: okteto/golang:1
+command: bash
+securityContext:
+  capabilities:
+    add:
+    - SYS_PTRACE
+volumes:
+- /go/pkg/
+- /root/.cache/go-build/
+- /go
+- /.vscode-server
+- /root/go
+- /root/.vscode-server
+sync:
+- .:/usr/src/app

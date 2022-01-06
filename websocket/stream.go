@@ -3,8 +3,13 @@
 package websocket
 
 import (
+	"encoding/json"
+	"errors"
 	"io"
+	"strconv"
+	"strings"
 
+	"github.com/gorilla/websocket"
 	ws "github.com/gorilla/websocket"
 )
 
@@ -22,12 +27,24 @@ func NewObjectStream(conn *ws.Conn) ObjectStream {
 
 // WriteObject implements jsonrpc2.ObjectStream.
 func (t ObjectStream) WriteObject(obj interface{}) error {
-	return t.conn.WriteJSON(obj)
+	msg, err := json.Marshal(obj)
+	if err != nil {
+		return err
+	}
+	t.conn.WriteMessage(websocket.TextMessage, append([]byte("Content-Length: "), append([]byte(strconv.Itoa(len(msg))), []byte("\r\n\r\n")...)...))
+	return t.conn.WriteMessage(websocket.TextMessage, msg)
 }
 
 // ReadObject implements jsonrpc2.ObjectStream.
 func (t ObjectStream) ReadObject(v interface{}) error {
-	err := t.conn.ReadJSON(v)
+	_, cl, err := t.conn.ReadMessage()
+	if err != nil {
+		return err
+	}
+	if !strings.HasPrefix(string(cl), "Content-Length:") {
+		return errors.New("invalid state")
+	}
+	err = t.conn.ReadJSON(v)
 	if e, ok := err.(*ws.CloseError); ok {
 		if e.Code == ws.CloseAbnormalClosure && e.Text == io.ErrUnexpectedEOF.Error() {
 			// Suppress a noisy (but harmless) log message by
